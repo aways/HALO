@@ -12,6 +12,7 @@ import android.preference.PreferenceManager;
 public class DownloadLinkActivity extends PreferenceActivity {
 
     Preference Paranoid;
+    Preference Crom;
     Preference Carbon;
     Preference RootBox;
     Preference uXylon;
@@ -25,6 +26,7 @@ public class DownloadLinkActivity extends PreferenceActivity {
         addPreferencesFromResource(R.xml.downloadlink);
 
         Paranoid = findPreference("paranoid");
+        Crom = findPreference("crom");
         Carbon = findPreference("carbon");
         RootBox = findPreference("rootbox");
         uXylon = findPreference("uxylon");
@@ -37,6 +39,8 @@ public class DownloadLinkActivity extends PreferenceActivity {
     public boolean onPreferenceTreeClick(PreferenceScreen preferenceScreen, Preference preference) {
         if (preference == Paranoid) {
             launchUrl("http://goo.im/devs/paranoidandroid/roms");
+        } else if (preference == Crom) {
+            launchUrl("http://www.xdafileserver.nl/aways/c-rom/");
         } else if (preference == Carbon) {
             launchUrl("http://goo.im/devs/carbon");
         } else if (preference == RootBox) {

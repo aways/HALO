@@ -10,6 +10,11 @@
             android:icon="@drawable/paranoid_android" />
 
         <Preference
+            android:key="crom"
+            android:title="@string/crom"
+            android:icon="@drawable/crom" />
+
+        <Preference
             android:key="carbon"
             android:title="@string/carbon_rom"
             android:icon="@drawable/carbon" />

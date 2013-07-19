@@ -305,6 +305,7 @@ public class MainActivity extends PreferenceActivity {
                 .commit();        	
         } else {
             //Try to check if this rom is supported
+            String hasCm = Utils.getProp("ro.crom");
             String hasCr = Utils.getProp("ro.carbon");
             String hasPa = Utils.getProp("ro.pa");
             String hasSm = Utils.getProp("ro.sm");
