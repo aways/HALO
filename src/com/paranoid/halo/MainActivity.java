@@ -2,6 +2,7 @@ package com.paranoid.halo;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.Object;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,6 +10,7 @@ import android.app.ActionBar;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Shader;
@@ -30,10 +32,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
 import android.provider.MediaStore;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.CheckBox;
 import android.widget.Toast;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
@@ -45,7 +49,10 @@ public class MainActivity extends PreferenceActivity {
     private static final int MENU_ADD = 0;
     private static final int MENU_ACTION = 1;
     private static final int MENU_EXTENSIONS = 2;
+
+    public static final String PREFS_NAME = "YouDisgustMe";
     
+    private CheckBox dontShowAgain;
     private NotificationManager mNotificationManager;
     private Context mContext;
     private boolean mShowing;
@@ -102,7 +109,7 @@ public class MainActivity extends PreferenceActivity {
 
     }
 
-	@Override
+    @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
         MenuItem item = menu.getItem(1);
         item.setVisible(mRoot.getPreferenceCount() > 0);
@@ -283,50 +290,74 @@ public class MainActivity extends PreferenceActivity {
     	// On first run: Show a Dialog to explain the user the utility of Halo))).
         // We will store the firstrun as a SharedPreference.
 
-        boolean firstrun = getSharedPreferences("PREFERENCE", MODE_PRIVATE).getBoolean("firstrun", true);
+        boolean firstrun = getSharedPreferences("PREFERENCE",
+                    MODE_PRIVATE).getBoolean("firstrun", true);
 
         if (firstrun) {
-        	// Create HelperActivity as a dialog
-        	Intent intent = new Intent(this, HelperActivity.class);
-	        this.startActivity(intent);
+            // Create HelperActivity as a dialog
+            Intent intent = new Intent(this, HelperActivity.class);
+            this.startActivity(intent);
 
-        	// Save a shared Preference explaining to the app that it has been run previously
-        	getSharedPreferences("PREFERENCE", MODE_PRIVATE)
-        		.edit()
-        		.putBoolean("firstrun", false)
-        		.commit();        	
-        }
-        else{
-        	//Try to check if the device has PA installed.
-    		
-    		String hasPa = Utils.getProp("ro.pa");
-    		
-    		if(hasPa.equals("true")){
-    			// You're clever dude! No advice must be shown!
+            // Save a shared Preference explaining to the app that it has been run previously
+            getSharedPreferences("PREFERENCE", MODE_PRIVATE)
+                .edit()
+                .putBoolean("firstrun", false)
+                .commit();        	
+        } else {
+            //Try to check if this rom is supported
+            String hasCr = Utils.getProp("ro.carbon");
+            String hasPa = Utils.getProp("ro.pa");
+            String hasSm = Utils.getProp("ro.sm");
+            String hasRb = Utils.getProp("ro.rootbox");
+            String hasPac = Utils.getProp("ro.pac");
+            String hasXy = Utils.getProp("ro.ukg");
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+            LayoutInflater inflater = LayoutInflater.from(MainActivity.this);
+            View eulaLayout = inflater.inflate(R.layout.alert_dialog, null);
+            dontShowAgain = (CheckBox) eulaLayout.findViewById(R.id.skip);
+            
+
+            builder.setMessage(R.string.nots_content)
+                 .setView(eulaLayout)
+                 .setTitle(R.string.nots_title)
+                 .setPositiveButton(R.string.nots_download,
+                    new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                           String checkBoxResult = "NOT checked";
+                           if (dontShowAgain.isChecked())
+                                checkBoxResult = "checked";
+                            SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
+                            SharedPreferences.Editor editor = settings.edit();
+                            editor.putString("skipMessage", checkBoxResult);
+                            // Commit the edits!
+                            editor.commit();
+                            Intent intent = new Intent(MainActivity.this,
+                                    DownloadLinkActivity.class);
+                            MainActivity.this.startActivity(intent);
+                        }
+                    })   
+                    .setNegativeButton(R.string.nots_ok,
+                       new DialogInterface.OnClickListener() {
+                           public void onClick(DialogInterface dialog, int id) {
+                               String checkBoxResult = "NOT checked";
+                               if (dontShowAgain.isChecked())
+                                   checkBoxResult = "checked";
+                               SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
+                               SharedPreferences.Editor editor = settings.edit();
+                               editor.putString("skipMessage", checkBoxResult);
+                               // Commit the edits!
+                               editor.commit();
+                               dialog.dismiss();
+                           }
+                    });
+
+            AlertDialog nots_dialog = builder.create();
+            SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
+            String skipMessage = settings.getString("skipMessage", "NOT checked");
+            if (!skipMessage.equals("checked")) {
+                nots_dialog.show();
             }
-    		else{
-    			AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-
-    			builder.setMessage(R.string.nopa_content)
-    			       .setTitle(R.string.nopa_title)
-    			       .setPositiveButton(R.string.nopa_download, new DialogInterface.OnClickListener() {
-    			           public void onClick(DialogInterface dialog, int id) {
-    			        	   String url = "http://goo.im/devs/paranoidandroid/roms";
-    			        	   Intent i = new Intent(Intent.ACTION_VIEW);
-    			        	   i.setData(Uri.parse(url));
-    			        	   startActivity(i);
-    			           }
-    			       })   
-    			       .setNegativeButton(R.string.nopa_ok, new DialogInterface.OnClickListener() {
-    			           public void onClick(DialogInterface dialog, int id) {
-    			        	   dialog.dismiss();
-    			           }
-    			       });
-
-    			AlertDialog nopa_dialog = builder.create();
-    			nopa_dialog.show();
-    		}
         }
     }
-
 }
